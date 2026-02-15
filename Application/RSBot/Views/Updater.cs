@@ -1,27 +1,24 @@
-﻿using System;
-using System.ComponentModel;
+﻿using RSBot.Core;
+using SDUI.Controls;
+using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Net;
+using System.IO.Compression;
+using System.Net.Http;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RSBot.Core;
 
 namespace RSBot.Views;
 
-public partial class Updater : Form
+public partial class Updater : UIWindowBase
 {
-    /// <summary>
-    ///     Update address
-    /// </summary>
-    private readonly string _updateUrl = "https://rsbot.app/update";
+    private readonly string _latestReleaseApi =
+        $"https://api.github.com/repos/myildirimofficial/RSBot/releases/latest";
 
-    /// <summary>
-    ///     Get or sets the web client
-    /// </summary>
-    private WebClient _webClient;
+    private string _downloadUrl;
+    private string _latestTag;
 
     public Updater()
     {
@@ -29,124 +26,132 @@ public partial class Updater : Form
         CheckForIllegalCrossThreadCalls = false;
     }
 
-    /// <summary>
-    ///     Get current version
-    /// </summary>
-    private Version _currentVersion => Assembly.GetExecutingAssembly().GetName().Version;
+    private Version _currentVersion =>
+        Assembly.GetExecutingAssembly().GetName().Version;
 
-    private void Append(string text, Color color, FontStyle fontStyle = FontStyle.Regular, float emSize = 0)
-    {
-        rtbUpdateInfo.SuspendLayout();
-        rtbUpdateInfo.Select(rtbUpdateInfo.TextLength, text.Length);
-        rtbUpdateInfo.SelectionColor = color;
-        rtbUpdateInfo.SelectionFont = new Font(
-            Font.FontFamily,
-            emSize == 0 ? rtbUpdateInfo.Font.Size : emSize,
-            fontStyle
-        );
-        rtbUpdateInfo.Write(text);
-        rtbUpdateInfo.ResumeLayout();
-    }
+    #region CHECK UPDATE
 
-    private void _Client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
-    {
-        Process.Start(Kernel.BasePath + "\\Replacer.exe");
-        Environment.Exit(0);
-    }
-
-    private void _Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-    {
-        try
-        {
-            downloadProgress.Value = e.ProgressPercentage;
-            lblDownloadInfo.Text = string.Format(
-                "{0} MB / {1} MB",
-                (e.BytesReceived / 1024d / 1024d).ToString("0.00"),
-                (e.TotalBytesToReceive / 1024d / 1024d).ToString("0.00")
-            );
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Environment.Exit(0);
-        }
-    }
-
-    private void btnDownload_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            downloadProgress.Visible = true;
-            downloadProgress.Location = new Point(16, 40);
-            cbChangeLog.Checked = false;
-            centerPanel.Visible = false;
-            lblInfo.Text = "Downloading updates ...";
-            var tempDirectory = Path.Combine(Kernel.BasePath, "rsbot_download_temp");
-
-            if (!Directory.Exists(tempDirectory))
-                Directory.CreateDirectory(tempDirectory).Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-
-            _webClient.DownloadFileAsync(new Uri(_updateUrl + "download/latest.zip"), tempDirectory + "\\latest.zip");
-            _webClient.DownloadProgressChanged += _Client_DownloadProgressChanged;
-            _webClient.DownloadFileCompleted += _Client_DownloadFileCompleted;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Environment.Exit(0);
-        }
-    }
-
-    private async void cbChangeLog_CheckedChanged(object sender, EventArgs e)
-    {
-        await Task.Run(() =>
-        {
-            if (cbChangeLog.Checked)
-                for (var i = Height; i <= 451; i += 4)
-                    Height += 4;
-            else
-                for (var i = Height; i >= 78; i -= 4)
-                    Height -= 4;
-        });
-    }
-
-    /// <summary>
-    ///     Check for Updates
-    /// </summary>
-    /// <returns><c>true</c> if there is otherwise, <c>false</c>.</returns>
     public async Task<bool> Check()
     {
-        return false; // disabled for now.
         try
         {
-            _webClient = new WebClient();
-            var updateInfo = (await _webClient.DownloadStringTaskAsync(_updateUrl + "/latest.txt")).Split(
-                new[] { Environment.NewLine },
-                StringSplitOptions.RemoveEmptyEntries
-            );
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("RSBot-Updater");
 
-            var version = new Version(updateInfo[0]);
+            var json = await client.GetStringAsync(_latestReleaseApi);
+            using var doc = JsonDocument.Parse(json);
 
-            if (version > _currentVersion)
+            _latestTag = doc.RootElement.GetProperty("tag_name").GetString();
+
+            var body = doc.RootElement.GetProperty("body").GetString();
+
+            foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
             {
-                var date = updateInfo[1];
+                var name = asset.GetProperty("name").GetString();
+                if (name.EndsWith(".zip"))
+                {
+                    _downloadUrl = asset.GetProperty("browser_download_url").GetString();
+                    break;
+                }
+            }
 
-                Append("Build " + version, Color.FromArgb(99, 33, 99), FontStyle.Regular, 13);
-                Append(date, Color.DarkGray, FontStyle.Italic, 9);
+            if (string.IsNullOrEmpty(_latestTag))
+                return false;
 
-                for (var i = 2; i < updateInfo.Length; i++)
-                    Append(updateInfo[i], Color.DarkSlateGray);
+            bool updateAvailable = false;
 
-                rtbUpdateInfo.SelectionStart = 0;
+            if (_latestTag.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            {
+                var latestVersion = new Version(_latestTag.TrimStart('v'));
+                var currentVersion = _currentVersion;
+
+                if (latestVersion > currentVersion)
+                    updateAvailable = true;
+            }
+            else if (DateTime.TryParse(_latestTag, out var latestDate))
+            {
+                var assemblyPath = Assembly.GetExecutingAssembly().Location;
+                var buildDate = File.GetLastWriteTime(assemblyPath);
+
+                if (latestDate.Date > buildDate.Date)
+                    updateAvailable = true;
+            }
+
+            if (updateAvailable)
+            {
+                rtbUpdateInfo.Rtf = new MarkdownToRtfParser().Parse(body ?? "Update available.");
 
                 return true;
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(ex.Message, "Update Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         return false;
     }
+
+
+    #endregion
+
+    #region DOWNLOAD & INSTALL
+
+    private async void btnDownload_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            downloadProgress.Visible = true;
+            lblInfo.Text = "Downloading update...";
+
+            var tempPath = Path.Combine(Kernel.BasePath, "update_temp");
+
+            if (Directory.Exists(tempPath))
+                Directory.Delete(tempPath, true);
+
+            Directory.CreateDirectory(tempPath);
+
+            var zipPath = Path.Combine(tempPath, "update.zip");
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("RSBot-Updater");
+
+            using var response = await client.GetAsync(_downloadUrl,
+                HttpCompletionOption.ResponseHeadersRead);
+
+            var total = response.Content.Headers.ContentLength ?? -1L;
+            var canReport = total != -1;
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write);
+
+            var buffer = new byte[8192];
+            long read = 0;
+            int length;
+
+            while ((length = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fs.WriteAsync(buffer, 0, length);
+                read += length;
+
+                if (canReport)
+                {
+                    int progress = (int)((read * 100) / total);
+                    downloadProgress.Value = progress;
+                }
+            }
+
+            Process.Start(Path.Combine(Kernel.BasePath, "RSBot.Updater.exe"));
+
+            Environment.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Update Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    #endregion
 }
