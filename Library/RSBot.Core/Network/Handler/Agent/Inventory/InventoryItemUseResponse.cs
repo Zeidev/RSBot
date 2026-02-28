@@ -26,8 +26,21 @@ internal class InventoryItemUseResponse : IPacketHandler
     /// <param name="packet">The packet.</param>
     public void Invoke(Packet packet)
     {
-        if (packet.ReadByte() != 0x01)
+        var result = packet.ReadByte();
+        
+        // Handle failure cases - log error and return
+        if (result != 0x01)
+        {
+            var errorCode = result;
+            var failedSlot = packet.ReadByte();
+            
+            // Log the error for debugging
+            Log.Debug($"[Inventory] Item use failed: result={errorCode}, slot={failedSlot}");
+            
+            // Fire event for failure handling (allows plugins to handle retry/logging)
+            EventManager.FireEvent("OnUseItemFailed", failedSlot, errorCode);
             return;
+        }
 
         var sourceSlot = packet.ReadByte();
         var newAmount = packet.ReadUShort();

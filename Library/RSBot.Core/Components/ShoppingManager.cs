@@ -404,7 +404,7 @@ public static class ShoppingManager
         var awaitCallback = new AwaitCallback(
             response =>
             {
-                var result = packet.ReadByte();
+                var result = response.ReadByte();
 
                 if (result == 2)
                 {
