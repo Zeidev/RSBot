@@ -44,13 +44,110 @@ std::vector<std::string> TokenizeString(const std::string& str, const std::strin
 	return tokens;
 }
 
+extern "C" HANDLE(WINAPI* Real_CreateSemaphoreW)(
+	LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+	LONG lInitialCount,
+	LONG lMaximumCount,
+	LPCWSTR lpName) = CreateSemaphoreW;
+
+HANDLE WINAPI User_CreateSemaphoreW(
+	LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+	LONG lInitialCount,
+	LONG lMaximumCount,
+	LPCWSTR lpName)
+{
+	if (lpName && wcsstr(lpName, L"Silkroad Client") != nullptr)
+	{
+		wchar_t newName[128] = { 0 };
+
+		_snwprintf_s(
+			newName,
+			_countof(newName),
+			_TRUNCATE,
+			L"%s_%llu",
+			lpName,
+			(unsigned long long)(__rdtsc() & 0xFFFFFFFF)
+		);
+
+		wprintf(L"%s %s", __FUNCTION__, newName);
+
+		return Real_CreateSemaphoreW(
+			lpSemaphoreAttributes,
+			lInitialCount,
+			lMaximumCount,
+			newName
+		);
+	}
+
+	return Real_CreateSemaphoreW(
+		lpSemaphoreAttributes,
+		lInitialCount,
+		lMaximumCount,
+		lpName
+	);
+}
+
+extern "C" HANDLE(WINAPI* Real_CreateSemaphoreA)(
+	LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+	LONG lInitialCount,
+	LONG lMaximumCount,
+	LPCSTR lpName) = CreateSemaphoreA;
+
+HANDLE WINAPI User_CreateSemaphoreA(
+	LPSECURITY_ATTRIBUTES lpSemaphoreAttributes,
+	LONG lInitialCount,
+	LONG lMaximumCount,
+	LPCSTR lpName)
+{
+	if (lpName && strstr(lpName, "Silkroad Client") != nullptr)
+	{
+		char newName[128] = { 0 };
+
+		_snprintf_s(
+			newName,
+			_countof(newName),
+			_TRUNCATE,
+			"%s_%llu",
+			lpName,
+			(unsigned long long)(__rdtsc() & 0xFFFFFFFF)
+		);
+
+		printf("%s %s", __FUNCTION__, newName);
+
+		return Real_CreateSemaphoreA(
+			lpSemaphoreAttributes,
+			lInitialCount,
+			lMaximumCount,
+			newName
+		);
+	}
+
+	return Real_CreateSemaphoreA(
+		lpSemaphoreAttributes,
+		lInitialCount,
+		lMaximumCount,
+		lpName
+	);
+}
+
 extern "C" HANDLE(WINAPI* Real_CreateMutexA)(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName) = CreateMutexA;
 HANDLE WINAPI User_CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName)
 {
-	if (lpName && strcmp(lpName, "Silkroad Client") == 0)
+
+	if (lpName && strstr(lpName, "Silkroad Client") != nullptr)
 	{
 		char newName[128] = { 0 };
-		_snprintf_s(newName, sizeof(newName), sizeof(newName) / sizeof(newName[0]) - 1, "Silkroad Client_%lld", 0xFFFFFFFF & __rdtsc());
+
+		_snprintf_s(
+			newName,
+			_countof(newName),
+			_TRUNCATE,
+			"%s_%llu",
+			lpName,
+			(unsigned long long)(__rdtsc() & 0xFFFFFFFF)
+		);
+		printf("%s %s", __FUNCTION__, newName);
+
 		return Real_CreateMutexA(lpMutexAttributes, bInitialOwner, newName);
 	}
 	return Real_CreateMutexA(lpMutexAttributes, bInitialOwner, lpName);
@@ -68,41 +165,6 @@ int WINAPI User_bind(SOCKET s, const struct sockaddr* name, int namelen)
 		}
 	}
 	return Real_bind(s, name, namelen);
-}
-
-extern "C" HANDLE(WINAPI* Real_CreateSemaphoreA)(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName) = CreateSemaphoreA;
-HANDLE WINAPI User_CreateSemaphoreA(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCSTR lpName)
-{
-	if (lpName && strcmp(lpName, "Global\\Silkroad Client") == 0)
-	{
-		char newName[128] = { 0 };
-		_snprintf_s(newName, sizeof(newName), sizeof(newName) / sizeof(newName[0]) - 1, "Global\\Silkroad Client_%lld", 0xFFFFFFFF & __rdtsc());
-		return Real_CreateSemaphoreA(lpSemaphoreAttributes, lInitialCount, lMaximumCount, newName);
-	}
-
-	return Real_CreateSemaphoreA(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName);
-}
-
-extern "C" HANDLE(WINAPI* Real_CreateSemaphoreW)(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName) = CreateSemaphoreW;
-HANDLE WINAPI User_CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
-{
-	if (lpName && wcscmp(lpName, L"Global\\Silkroad Client") == 0)
-	{
-		wchar_t newName[128] = { 0 };
-
-		_snwprintf_s(newName, sizeof(newName), sizeof(newName) / sizeof(newName[0]) - 1, L"Global\\Silkroad Client_%lld", 0xFFFFFFFF & __rdtsc());
-		return Real_CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, newName);
-	}
-
-	if (lpName && wcscmp(lpName, L"Global\\Silkroad Client TR") == 0)
-	{
-		wchar_t newName[128] = { 0 };
-
-		_snwprintf_s(newName, sizeof(newName), sizeof(newName) / sizeof(newName[0]) - 1, L"Global\\Silkroad Client TR_%lld", 0xFFFFFFFF & __rdtsc());
-		return Real_CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, newName);
-	}
-
-	return Real_CreateSemaphoreW(lpSemaphoreAttributes, lInitialCount, lMaximumCount, lpName);
 }
 
 extern "C" DWORD(WINAPI* Real_GetAdaptersInfo)(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen) = GetAdaptersInfo;
@@ -158,6 +220,9 @@ int WINAPI Detour_connect(SOCKET s, const struct sockaddr* name, int len)
 
 void Install()
 {
+	CreateMutexA(0, FALSE, "Silkroad Online Launcher");
+	CreateMutexA(0, FALSE, "Ready");
+
 	WSADATA wsaData = { 0 };
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
@@ -246,7 +311,6 @@ DWORD WINAPI Initialize(LPVOID lpParam) {
 extern "C" _declspec(dllexport) BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulReason, LPVOID lpReserved)
 {
 	if (ulReason == DLL_PROCESS_ATTACH) {
-		DisableThreadLibraryCalls(hModule);
 		CloseHandle(CreateThread(NULL, 0, Initialize, NULL, 0, NULL));
 	}
 	return TRUE;
