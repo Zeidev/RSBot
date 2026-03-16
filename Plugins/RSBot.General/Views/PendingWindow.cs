@@ -47,7 +47,9 @@ public partial class PendingWindow : UIWindowBase
         var point = new Point(form.Left + form.Width / 2 - Width / 2, form.Top); //  + form.Height / 2 - Height / 2
 
         Location = point;
-        Show(owner);
+
+        if(!Visible)
+            Show(owner);
     }
 
     internal void Update(Packet packet)
@@ -82,18 +84,21 @@ public partial class PendingWindow : UIWindowBase
 
     internal void Start(int count, int timestamp)
     {
-        AutoLogin.Pending = true;
-        _startedTick = Kernel.TickCount;
+        //this.Invoke(() =>
+        //{
+            AutoLogin.Pending = true;
+            _startedTick = Kernel.TickCount;
 
-        Log.StatusLang("PendingQueue", Serverlist.Joining?.Name, count, count);
+            Log.StatusLang("PendingQueue", Serverlist.Joining?.Name, count, count);
 
-        labelPending.Text = $"{count} / {count}";
-        labelServerName.Text = labelServerName.Text.Replace("{SERVER}", Serverlist.Joining?.Name);
+            labelPending.Text = $"{count} / {count}";
+            labelServerName.Text = labelServerName.Text.Replace("{SERVER}", Serverlist.Joining?.Name);
 
-        PrintTime(labelAvgWaitingTime, timestamp);
-        LogPending(count, count);
+            PrintTime(labelAvgWaitingTime, timestamp);
+            LogPending(count, count);
 
-        StartClientlessQueueTask();
+            StartClientlessQueueTask();
+        //});
     }
 
     private void StartClientlessQueueTask()

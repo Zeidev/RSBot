@@ -45,9 +45,6 @@ internal static class AutoLogin
         if (!GlobalConfig.Get<bool>("RSBot.General.EnableAutomatedLogin"))
         {
             _busy = false;
-
-            await Task.Delay(5000);
-            ClientlessManager.RequestServerList();
             return;
         }
 

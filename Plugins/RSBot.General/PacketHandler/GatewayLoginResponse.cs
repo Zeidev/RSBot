@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using RSBot.Core;
@@ -85,9 +86,12 @@ internal class GatewayLoginResponse : IPacketHandler
                 AutoLogin.Handle();
                 break;
 
+            case 28: // isro block
+            case 29: // ksro block
             case 5:
                 Log.WarnLang("ServerFull");
-                AutoLogin.Handle();
+                Task.Delay(1000).ContinueWith((e) => AutoLogin.Handle());
+
                 break;
 
             case 15:
@@ -99,21 +103,20 @@ internal class GatewayLoginResponse : IPacketHandler
                 var count = packet.ReadUShort();
                 var timestamp = packet.ReadInt();
 
-                Task.Factory.StartNew(() =>
+                Task.Run(() =>
                 {
-                    SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+                    var main = Application.OpenForms
+                            .OfType<Form>()
+                            .FirstOrDefault();
 
-                    View.PendingWindow.Start(count, timestamp);
-                    if (!GlobalConfig.Get<bool>("RSBot.General.AutoHidePendingWindow"))
-                        View.PendingWindow.ShowAtTop(View.Instance);
+                    main?.BeginInvoke(() =>
+                    {
+                        View.PendingWindow.Start(count, timestamp);
+                        if (!GlobalConfig.Get<bool>("RSBot.General.AutoHidePendingWindow"))
+                            View.PendingWindow.ShowAtTop(View.Instance);
+                    });
                 });
 
-                break;
-
-            case 28: // isro block
-            case 29: // ksro block
-                Log.WarnLang("ServerFull");
-                AutoLogin.Handle();
                 break;
 
             case 43:
