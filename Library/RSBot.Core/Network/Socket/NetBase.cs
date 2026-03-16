@@ -153,7 +153,7 @@ public class NetBase(bool isClient = false)
             if (IsClosing || !EnablePacketDispatcher)
                 return;
 
-            var packets = _protocol.TransferIncoming();
+            var packets = _protocol?.TransferIncoming();
             if (packets != null)
             {
                 foreach (var packet in packets)

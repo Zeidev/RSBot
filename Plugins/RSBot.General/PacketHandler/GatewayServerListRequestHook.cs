@@ -22,7 +22,7 @@ internal class GatewayServerListRequestHook : IPacketHook
     public PacketDestination Destination => PacketDestination.Server;
 
     /// <summary>
-    ///     Replaces the packet and returns a new packet.
+    /// Replaces the packet and returns a new packet.
     /// </summary>
     /// <param name="packet"></param>
     /// <returns></returns>

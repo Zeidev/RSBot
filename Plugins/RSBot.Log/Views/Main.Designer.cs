@@ -45,12 +45,13 @@
             checkEnabled.Checked = true;
             checkEnabled.CheckState = System.Windows.Forms.CheckState.Checked;
             checkEnabled.Depth = 0;
-            checkEnabled.Location = new System.Drawing.Point(14, 8);
+            checkEnabled.Dock = System.Windows.Forms.DockStyle.Left;
+            checkEnabled.Location = new System.Drawing.Point(0, 0);
             checkEnabled.Margin = new System.Windows.Forms.Padding(0);
             checkEnabled.MouseLocation = new System.Drawing.Point(-1, -1);
             checkEnabled.Name = "checkEnabled";
             checkEnabled.Ripple = true;
-            checkEnabled.Size = new System.Drawing.Size(73, 30);
+            checkEnabled.Size = new System.Drawing.Size(97, 46);
             checkEnabled.TabIndex = 1;
             checkEnabled.Text = "Enabled";
             checkEnabled.UseVisualStyleBackColor = true;
@@ -72,13 +73,14 @@
             // 
             // panel1
             // 
+            panel1.BackColor = System.Drawing.Color.Transparent;
             panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
             panel1.BorderColor = System.Drawing.Color.Transparent;
-            panel1.Controls.Add(checkNormal);
             panel1.Controls.Add(checkError);
             panel1.Controls.Add(checkWarning);
-            panel1.Controls.Add(checkDebug);
             panel1.Controls.Add(btnReset);
+            panel1.Controls.Add(checkNormal);
+            panel1.Controls.Add(checkDebug);
             panel1.Controls.Add(checkEnabled);
             panel1.Dock = System.Windows.Forms.DockStyle.Top;
             panel1.Location = new System.Drawing.Point(0, 0);
@@ -94,12 +96,13 @@
             checkNormal.Checked = true;
             checkNormal.CheckState = System.Windows.Forms.CheckState.Checked;
             checkNormal.Depth = 0;
-            checkNormal.Location = new System.Drawing.Point(100, 8);
+            checkNormal.Dock = System.Windows.Forms.DockStyle.Left;
+            checkNormal.Location = new System.Drawing.Point(185, 0);
             checkNormal.Margin = new System.Windows.Forms.Padding(0);
             checkNormal.MouseLocation = new System.Drawing.Point(-1, -1);
             checkNormal.Name = "checkNormal";
             checkNormal.Ripple = true;
-            checkNormal.Size = new System.Drawing.Size(70, 30);
+            checkNormal.Size = new System.Drawing.Size(93, 46);
             checkNormal.TabIndex = 6;
             checkNormal.Text = "Normal";
             checkNormal.UseVisualStyleBackColor = false;
@@ -110,12 +113,13 @@
             checkError.Checked = true;
             checkError.CheckState = System.Windows.Forms.CheckState.Checked;
             checkError.Depth = 0;
-            checkError.Location = new System.Drawing.Point(332, 8);
+            checkError.Dock = System.Windows.Forms.DockStyle.Left;
+            checkError.Location = new System.Drawing.Point(376, 0);
             checkError.Margin = new System.Windows.Forms.Padding(0);
             checkError.MouseLocation = new System.Drawing.Point(-1, -1);
             checkError.Name = "checkError";
             checkError.Ripple = true;
-            checkError.Size = new System.Drawing.Size(56, 30);
+            checkError.Size = new System.Drawing.Size(75, 46);
             checkError.TabIndex = 3;
             checkError.Text = "Error";
             checkError.UseVisualStyleBackColor = false;
@@ -126,12 +130,13 @@
             checkWarning.Checked = true;
             checkWarning.CheckState = System.Windows.Forms.CheckState.Checked;
             checkWarning.Depth = 0;
-            checkWarning.Location = new System.Drawing.Point(249, 8);
+            checkWarning.Dock = System.Windows.Forms.DockStyle.Left;
+            checkWarning.Location = new System.Drawing.Point(278, 0);
             checkWarning.Margin = new System.Windows.Forms.Padding(0);
             checkWarning.MouseLocation = new System.Drawing.Point(-1, -1);
             checkWarning.Name = "checkWarning";
             checkWarning.Ripple = true;
-            checkWarning.Size = new System.Drawing.Size(76, 30);
+            checkWarning.Size = new System.Drawing.Size(98, 46);
             checkWarning.TabIndex = 4;
             checkWarning.Text = "Warning";
             checkWarning.UseVisualStyleBackColor = false;
@@ -142,12 +147,13 @@
             checkDebug.Checked = true;
             checkDebug.CheckState = System.Windows.Forms.CheckState.Checked;
             checkDebug.Depth = 0;
-            checkDebug.Location = new System.Drawing.Point(175, 8);
+            checkDebug.Dock = System.Windows.Forms.DockStyle.Left;
+            checkDebug.Location = new System.Drawing.Point(97, 0);
             checkDebug.Margin = new System.Windows.Forms.Padding(0);
             checkDebug.MouseLocation = new System.Drawing.Point(-1, -1);
             checkDebug.Name = "checkDebug";
             checkDebug.Ripple = true;
-            checkDebug.Size = new System.Drawing.Size(66, 30);
+            checkDebug.Size = new System.Drawing.Size(88, 46);
             checkDebug.TabIndex = 5;
             checkDebug.Text = "Debug";
             checkDebug.UseVisualStyleBackColor = false;
